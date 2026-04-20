@@ -1,111 +1,105 @@
 # 🎧 Model Card: Music Recommender Simulation
 
-## 1. Model Name  
+## 1. Model Name
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
-
----
-
-## 2. Intended Use  
-
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+**VibeFinder 1.0**
 
 ---
 
-## 3. How the Model Works  
+## 2. Intended Use
 
-Explain your scoring approach in simple language.  
+This model recommends top songs from a small catalog by matching a user's musical taste profile to song attributes. It is intended for classroom exploration of recommendation logic and explainability, not for production personalization.
 
-Prompts:  
-
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+The model assumes a user can be described with stable preferences such as genre, mood, energy, tempo, and related audio-style targets.
 
 ---
 
-## 4. Data  
+## 3. How the Model Works
 
-Describe the dataset the model uses.  
+The model uses content-based scoring.
 
-Prompts:  
+1. It reads structured song features from `songs.csv`.
+2. It compares each song against a user profile.
+3. It adds points for exact matches (genre, mood) and similarity points for numeric features (energy, tempo, valence, danceability, acousticness, popularity, release decade).
+4. It adds bonuses when detailed mood tags overlap.
+5. It ranks songs by score and applies diversity penalties to reduce repeated artist/genre in top results.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
-
----
-
-## 5. Strengths  
-
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The system supports multiple ranking strategies (`balanced`, `genre_first`, `mood_first`, `energy_similarity`) and always returns reasons explaining each recommendation.
 
 ---
 
-## 6. Limitations and Bias 
+## 4. Data
 
-Where the system struggles or behaves unfairly. 
+- Catalog size: **22 songs**.
+- Core attributes: `genre`, `mood`, `energy`, `tempo_bpm`, `valence`, `danceability`, `acousticness`.
+- Added attributes: `popularity`, `release_decade`, `instrumentalness`, `loudness_db`, `liveness`, `mood_tags`.
 
-Prompts:  
+Genres represented include pop, indie pop, synthpop, rock, jazz, lofi, ambient, acoustic, folk, hip-hop, synthwave, electronic, and edm. Moods include happy, chill, intense, calm, focused, relaxed, moody, euphoric, and melancholic.
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
-
----
-
-## 7. Evaluation  
-
-How you checked whether the recommender behaved as expected. 
-
-Prompts:  
-
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
-
-No need for numeric metrics unless you created some.
+Missing aspects: lyrics meaning, cultural context, language preference, and long-term listening behavior.
 
 ---
 
-## 8. Future Work  
+## 5. Strengths
 
-Ideas for how you would improve the model next.  
+- Transparent: each recommendation includes specific scoring reasons.
+- Responsive to user intent: profile changes produce clearly different outputs.
+- Flexible ranking: mode switching changes behavior in predictable ways.
+- Better variety than naive ranking due to diversity penalties.
 
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+In testing, EDM, acoustic/calm, and hip-hop/focus profiles each produced distinct top results that matched expected musical intuition.
 
 ---
 
-## 9. Personal Reflection  
+## 6. Limitations and Bias
 
-A few sentences about your experience.  
+1. **Small dataset bias**: with only 22 songs, recommendations can become repetitive.
+2. **Feature bias**: the system overweights whichever features are given higher point budgets.
+3. **Manual tag bias**: mood tags are hand-authored and subjective.
+4. **No collaborative signal**: it cannot learn from similar users, only from fixed content attributes.
 
-Prompts:  
+Potential filter bubble: if genre weight is too high (for example in `genre_first`), the recommender can ignore diverse but still relevant songs.
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+Fairness mitigation implemented: artist and genre diversity penalties in final top-k selection.
+
+---
+
+## 7. Evaluation
+
+Profiles tested:
+
+- High-Energy EDM Fan
+- Chill Acoustic Listener
+- Hip-Hop Focus Profile
+
+What was evaluated:
+
+- Whether top songs matched profile goals.
+- Whether explanations reflected actual scoring components.
+- Whether diversity penalties reduced repetition.
+- How outputs changed under different ranking modes.
+
+Observed behavior:
+
+- EDM profile preferred high-energy/high-BPM tracks with hype/festival tags.
+- Acoustic profile shifted to low-energy/high-acousticness songs.
+- Hip-hop profile emphasized danceability and focus tags.
+
+All starter tests in `tests/test_recommender.py` pass.
+
+---
+
+## 8. Future Work
+
+1. Add lightweight collaborative filtering signals (for example, synthetic play/skip history).
+2. Use learned embeddings rather than only hand-picked scalar features.
+3. Add novelty controls (recently heard penalty) and long-term fairness metrics.
+4. Expand dataset to hundreds/thousands of songs for more realistic ranking behavior.
+
+---
+
+## 9. Personal Reflection
+
+This project showed that recommendation systems are mostly about feature engineering and ranking design choices. Even simple weighted rules can produce useful personalization when the features are meaningful.
+
+The most interesting discovery was how easy it is to create accidental bias. Small changes in feature weights can dominate outcomes and narrow variety. Adding explainability and diversity logic made the system easier to trust and debug.
